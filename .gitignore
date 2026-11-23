@@ -1,0 +1,15 @@
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Source teaching assets (large binary files not required for web deploy)
+*.pptx
+*.docx
+12 Senses/
+General and Special Senses.txt
+
+# Node / Build artifacts (if any)
+node_modules/
+.netlify/
