@@ -6,8 +6,10 @@
 (() => {
   "use strict";
 
-  const slides = window.SLIDES || [];
+  const sourceSlides = window.SLIDES || [];
   const slos = window.SLOS || [];
+  const optionLetters = ["A", "B", "C", "D"];
+  let slides = shuffleQuizChoices(sourceSlides);
 
   const state = {
     currentIndex: 0,
@@ -40,6 +42,30 @@
   /* ------------------------------------------------------------------------
      Helpers
      ------------------------------------------------------------------------ */
+  function shuffle(items) {
+    for (let i = items.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [items[i], items[j]] = [items[j], items[i]];
+    }
+    return items;
+  }
+
+  function shuffleQuizChoices(deck) {
+    const quizzes = deck.filter((slide) => slide.type === "quiz");
+    const positions = shuffle(optionLetters.map((_, index) => index));
+    const correctPositions = shuffle(quizzes.map((_, index) => positions[index % positions.length]));
+
+    return deck.map((slide) => {
+      if (slide.type !== "quiz") return slide;
+
+      const correctIndex = correctPositions.pop();
+      const distractors = slide.options.filter((_, index) => index !== slide.correctIndex);
+      const options = shuffle(distractors);
+      options.splice(correctIndex, 0, slide.options[slide.correctIndex]);
+      return { ...slide, options, correctIndex };
+    });
+  }
+
   function getSloById(id) {
     return slos.find((s) => s.id === id) || null;
   }
@@ -256,8 +282,6 @@
   function renderQuizSlide(slide) {
     const slo = getSloById(slide.sloId);
     const saved = state.quizResults[slide.sloId];
-    const letters = ["A", "B", "C", "D"];
-
     const optionsHtml = slide.options
       .map((opt, idx) => {
         let extraClass = "";
@@ -274,7 +298,7 @@
         }
         return `
           <button type="button" class="quiz-option anim-item ${extraClass}" data-option="${idx}" ${disabledAttr}>
-            <span class="option-letter">${letters[idx]}</span>
+            <span class="option-letter">${optionLetters[idx]}</span>
             <span>${opt}</span>
           </button>
         `;
@@ -505,6 +529,7 @@
       if (btnReset) {
         btnReset.addEventListener("click", () => {
           state.quizResults = {};
+          slides = shuffleQuizChoices(sourceSlides);
           renderSlide();
         });
       }
